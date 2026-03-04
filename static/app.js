@@ -3,12 +3,13 @@ const { createApp } = Vue
 createApp({
     data() {
         return {
-            currentTab: 'discover',
+            currentTab: 'home',
             username: localStorage.getItem('username') || '',
             posts: [],
+            discoverPosts: [],
             profilePosts: [],
-            // Added a message property so the 'else' block doesn't crash
-            message: 'Welcome! Select a tab to get started.' 
+            message: 'Welcome! Select a tab to get started.',
+            newPostContent: ''
         }
     },
     computed: {
@@ -19,17 +20,38 @@ createApp({
     methods: {
         async handleTabChange(tab) {
             this.currentTab = tab
-            
-            if (tab === 'discover') {
-                // Clear old posts so the "No posts" or "Loading" logic triggers correctly
-                this.posts = [] 
-                await this.fetchPosts()
+
+            if (tab === 'home' && this.username) {
+                this.posts = []
+                await this.fetchUserPosts()
+            } else if (tab === 'discover') {
+                this.posts = []
+                await this.fetchDiscoverPosts()
             } else if (tab === 'profile' && this.username) {
                 this.profilePosts = []
                 await this.fetchProfilePosts()
             }
         },
-        async fetchPosts() {
+        async fetchUserPosts() {
+            const targetTab = 'home'
+            try {
+                const response = await fetch(`/posts/${this.username}?t=${Date.now()}`)
+                const data = await response.json()
+
+                if (this.currentTab === targetTab) {
+                    this.posts = data.map(post => ({
+                        post_id: post.id,
+                        username: post.display_name,
+                        content: post.content,
+                        created_at: post.created_at
+                    }))
+                }
+            } catch (error) {
+                console.error('Failed to fetch user posts:', error)
+                if (this.currentTab === targetTab) this.posts = []
+            }
+        },
+        async fetchDiscoverPosts() {
             const targetTab = 'discover'
             try {
                 const response = await fetch(`/posts?t=${Date.now()}`)
@@ -44,7 +66,7 @@ createApp({
                     }))
                 }
             } catch (error) {
-                console.error('Failed to fetch posts:', error)
+                console.error('Failed to fetch discover posts:', error)
                 if (this.currentTab === targetTab) this.posts = []
             }
         },
@@ -77,22 +99,22 @@ createApp({
             this.username = ''
             this.profilePosts = []
             localStorage.removeItem('username')
-            this.currentTab = 'discover'
-            this.handleTabChange('discover')
+            this.currentTab = 'home'
+            this.handleTabChange('home')
         },
-        async createPost() {
-            const placeholderContent = `whats up`
+        async submitPost() {
+            if (!this.newPostContent.trim()) return
             try {
                 const response = await fetch('/posts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         username: this.username || 'anonymous',
-                        content: placeholderContent
+                        content: this.newPostContent.trim()
                     })
                 })
                 if (response.ok) {
-                    console.log('Post created successfully')
+                    this.newPostContent = ''
                     await this.fetchPosts()
                 } else {
                     console.error('Failed to create post')
@@ -109,6 +131,6 @@ createApp({
     },
     mounted() {
         // Initial load
-        this.handleTabChange('discover')
+        this.handleTabChange('home')
     },
 }).mount('#app')
