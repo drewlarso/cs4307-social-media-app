@@ -4,8 +4,9 @@ A simple social network implementation with database schema, REST API, and inter
 
 ## Team Members
 
-- [Your Name]
-- [Partner's Name]
+- Drew
+- Daniel
+- Hayden
 
 ## Setup
 
