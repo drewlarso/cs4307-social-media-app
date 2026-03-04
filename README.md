@@ -1,13 +1,15 @@
-## Commands (I also added them to a Makefile)
+# Social Media App - CS4307 Project
 
-### Run the web server
+A simple social network implementation with database schema, REST API, and interesting queries.
 
-```zsh
-uv run fastapi dev src/main.py
-```
+## Team Members
+- [Your Name]
+- [Partner's Name]
 
-### Create/reset the database
+## Setup
 
-```zsh
-uv run src/init_db.py
-```
+This project uses UV for Python package management.
+
+### Install UV (if not already installed)
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
