@@ -17,3 +17,7 @@ test: database
 
 reset: clean database
 	@echo "Database reset complete!"
+
+custom:
+	uv run src/init_custom_db.py
+	uv run fastapi dev src/main.py

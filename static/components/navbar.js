@@ -1,14 +1,8 @@
 const Navbar = {
     emits: ['tab-change', 'logout'],
-    props: ['username'],
-    data() {
-        return {
-            activeTab: 'discover',
-        }
-    },
+    props: ['username', 'currentTab'],
     methods: {
         setTab(tab) {
-            this.activeTab = tab
             this.$emit('tab-change', tab)
         },
     },
@@ -28,7 +22,7 @@ const Navbar = {
                         :key="tab"
                         @click="setTab(tab)"
                         class="px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200"
-                        :class="activeTab === tab
+                        :class="currentTab === tab
                             ? 'bg-[var(--color-primary)] text-white'
                             : 'text-[var(--color-text-muted)] hover:text-white hover:bg-[var(--color-primary-light)]'"
                     >

@@ -11,3 +11,4 @@ wheels/
 
 # Other
 database.db
+custom_database.db
