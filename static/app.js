@@ -115,7 +115,11 @@ createApp({
                 })
                 if (response.ok) {
                     this.newPostContent = ''
-                    await this.fetchPosts()
+                    if (this.currentTab === 'home') {
+                        await this.fetchUserPosts()
+                    } else if (this.currentTab === 'discover') {
+                        await this.fetchDiscoverPosts()
+                    }
                 } else {
                     console.error('Failed to create post')
                 }
@@ -127,6 +131,7 @@ createApp({
     components: {
         navbar: Navbar,
         'login-popup': LoginPopup,
+        'post-input': PostInput,
         'post-item': Post,
     },
     mounted() {
