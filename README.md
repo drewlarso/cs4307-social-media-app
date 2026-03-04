@@ -3,6 +3,7 @@
 A simple social network implementation with database schema, REST API, and interesting queries.
 
 ## Team Members
+
 - [Your Name]
 - [Partner's Name]
 
@@ -11,5 +12,7 @@ A simple social network implementation with database schema, REST API, and inter
 This project uses UV for Python package management.
 
 ### Install UV (if not already installed)
+
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
+```

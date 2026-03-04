@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Social Media</title>
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+        <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body class="min-h-screen">
+        <div id="app">
+            <navbar
+                :username="username"
+                @tab-change="handleTabChange"
+                @logout="logout"
+            ></navbar>
+            <login-popup
+                :show="showLoginPopup"
+                @login="handleLogin"
+            ></login-popup>
+            <main class="p-6 max-w-6xl mx-auto">
+                <div v-if="currentTab === 'discover'" class="space-y-4">
+                    <post-item
+                        v-for="post in posts"
+                        :key="post.post_id"
+                        :username="post.username"
+                        :content="post.content"
+                    ></post-item>
+                    <div v-if="posts.length === 0" class="text-center text-[var(--color-text-muted)] py-8">
+                        No posts yet
+                    </div>
+                </div>
+                <div v-else-if="currentTab === 'profile'" class="space-y-4">
+                    <post-item
+                        v-for="post in profilePosts"
+                        :key="post.post_id"
+                        :username="post.username"
+                        :content="post.content"
+                    ></post-item>
+                    <div v-if="profilePosts.length === 0" class="text-center py-12">
+                        <p class="text-[var(--color-text-muted)] mb-2">No posts yet</p>
+                        <p class="text-sm text-[var(--color-text-muted)]">Share your thoughts to see them here!</p>
+                    </div>
+                </div>
+                <div v-else class="rounded-xl p-6" style="background-color: var(--color-surface-dark); border: 1px solid var(--color-border-dark);">
+                    {{ message }}
+                </div>
+            </main>
+        </div>
+        <script src="components/Navbar.js"></script>
+        <script src="components/LoginPopup.js"></script>
+        <script src="components/Post.js"></script>
+        <script src="app.js"></script>
+    </body>
+</html>
