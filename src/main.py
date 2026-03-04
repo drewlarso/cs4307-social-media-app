@@ -1,29 +1,29 @@
 import sqlite3
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from social_lib import SocialNetwork
 
 DB_PATH = Path("database.db")
+app = FastAPI(title="Social Network API", version="1.0.0")
+sn = SocialNetwork(DB_PATH)
 
 
-app = FastAPI()
+class UserCreate(BaseModel):
+    email: EmailStr
+    display_name: Optional[str] = None
 
 
-def get_db_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    display_name: Optional[str]
+    created_at: str
+    last_login: Optional[str]
+    account_count: int
 
 
-@app.get("/users")
-def get_users():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM User")
-    rows = cursor.fetchall()
-    conn.close()
-
-    return [{"id": row["id"], "email": row["email"]} for row in rows]
-
-
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+class AccountCreate(BaseModel):
+    user_id: int
