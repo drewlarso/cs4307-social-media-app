@@ -1,5 +1,6 @@
 import sqlite3
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 DB_PATH = Path("database.db")
@@ -14,11 +15,6 @@ def get_db_connection() -> sqlite3.Connection:
     return conn
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
 @app.get("/users")
 def get_users():
     conn = get_db_connection()
@@ -28,3 +24,6 @@ def get_users():
     conn.close()
 
     return [{"id": row["id"], "email": row["email"]} for row in rows]
+
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
