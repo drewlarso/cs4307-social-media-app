@@ -27,3 +27,19 @@ class UserResponse(BaseModel):
 
 class AccountCreate(BaseModel):
     user_id: int
+
+
+@app.get("/posts")
+async def get_posts():
+    return sn.list_posts()
+
+
+@app.get("/posts/{username}")
+async def get_posts_by_username(username: str):
+    account = sn.get_account_by_username(username)
+    if not account:
+        raise HTTPException(status_code=404, detail="User not found")
+    return sn.list_posts(account_id=account['account_id'])
+
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
