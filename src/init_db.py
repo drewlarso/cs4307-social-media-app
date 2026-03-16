@@ -2,8 +2,8 @@ import sqlite3
 from pathlib import Path
 
 DB_PATH = Path("database.db")
-SCHEMA_PATH = Path("src/.custom_schema.sql")
-DATA_PATH = Path("src/.custom_data.sql")
+SCHEMA_PATH = Path("src/schema.sql")
+DATA_PATH = Path("src/data.sql")
 
 
 def load_sql_file(cursor: sqlite3.Cursor, path: Path) -> None:
