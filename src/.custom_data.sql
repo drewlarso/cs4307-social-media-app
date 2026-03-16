@@ -1,68 +1,40 @@
-INSERT INTO user (id, display_name, created_at) VALUES
-    (1, 'alice_johnson', '2024-01-01 10:00:00'),
-    (2, 'bob_smith', '2024-01-02 11:00:00'),
-    (3, 'charlie_brown', '2024-01-03 12:00:00'),
-    (4, 'diana_prince', '2024-01-04 13:00:00'),
-    (5, 'eve_adams', '2024-01-05 14:00:00'),
-    (6, 'frank_miller', '2024-01-06 15:00:00'),
-    (7, 'grace_lee', '2024-01-07 16:00:00'),
-    (8, 'henry_wilson', '2024-01-08 17:00:00'),
-    (9, 'ivy_chen', '2024-01-09 18:00:00'),
-    (10, 'jack_davis', '2024-01-10 19:00:00');
+INSERT INTO people (person_id, email, name, birthday) VALUES 
+(1, 'alice@example.com', 'Alice Smith', '1992-05-14'),
+(2, 'bob@example.com', 'Bob Jones', '1988-11-20'),
+(3, 'charlie@example.com', 'Charlie Brown', '2001-02-03');
 
-INSERT INTO post (id, user_id, content, created_at) VALUES
-    (1, 1, 'Just launched my new blog! Check it out at alice.tech #coding', '2024-01-11 09:00:00'),
-    (2, 2, 'Working on an exciting new project with some amazing people', '2024-01-11 10:30:00'),
-    (3, 3, 'Finished my latest digital artwork! What do you think?', '2024-01-12 14:20:00'),
-    (4, 4, 'The sunset today was absolutely breathtaking', '2024-01-12 18:45:00'),
-    (5, 5, 'Streaming tonight at 8pm! Going to play some retro games', '2024-01-13 15:00:00'),
-    (6, 6, 'Captured this amazing moment at the beach', '2024-01-13 19:30:00'),
-    (7, 7, 'Just reviewed the new Python 3.13 features!', '2024-01-14 11:00:00'),
-    (8, 8, 'Anyone going to the tech conference next week?', '2024-01-14 16:15:00'),
-    (9, 9, 'Coffee is the fuel that powers my code', '2024-01-15 08:00:00'),
-    (10, 10, 'Finally finished that book I was reading', '2024-01-15 20:00:00'),
-    (11, 1, 'Monday motivation: Keep pushing forward!', '2024-01-16 07:30:00'),
-    (12, 2, 'Debugging is like being a detective in a crime movie', '2024-01-16 10:00:00'),
-    (13, 3, 'New art tutorial coming soon on my channel', '2024-01-16 14:00:00'),
-    (14, 4, 'Grateful for all the opportunities this year', '2024-01-17 09:00:00'),
-    (15, 5, 'Just hit 1000 followers! Thank you all!', '2024-01-17 12:00:00'),
-    (16, 6, 'The best time to plant a tree was 20 years ago', '2024-01-17 15:30:00'),
-    (17, 7, 'Working late tonight but loving every minute', '2024-01-18 22:00:00'),
-    (18, 8, 'Weekend vibes already! Who else is ready?', '2024-01-19 16:00:00'),
-    (19, 9, 'Trying out a new recipe today wish me luck', '2024-01-19 18:00:00'),
-    (20, 10, 'Morning run completed! 5K in 25 minutes', '2024-01-20 06:30:00'),
-    (21, 1, 'Hot take: tabs are better than spaces', '2024-01-20 11:00:00'),
-    (22, 2, 'Just deployed to production on a Friday', '2024-01-20 17:00:00'),
-    (23, 3, 'Inspiration can strike at any moment', '2024-01-21 09:30:00'),
-    (24, 4, 'Reading recommendations? Looking for sci-fi', '2024-01-21 13:00:00'),
-    (25, 5, 'This weather is perfect for a hike', '2024-01-21 15:00:00'),
-    (26, 6, 'Learning Rust has been quite the journey', '2024-01-22 10:00:00'),
-    (27, 7, 'Pizza for breakfast dont judge me', '2024-01-22 08:30:00'),
-    (28, 8, 'Just finished a 100 day coding challenge!', '2024-01-22 20:00:00'),
-    (29, 9, 'The little things in life matter most', '2024-01-23 11:00:00'),
-    (30, 10, 'Anyone else obsessed with this new show?', '2024-01-23 21:00:00'),
-    (31, 1, 'Code review tip: be kind to your teammates', '2024-01-24 09:00:00'),
-    (32, 2, 'Sometimes the best solution is no code at all', '2024-01-24 14:00:00'),
-    (33, 3, 'Sold my first NFT! Dreams do come true', '2024-01-24 16:30:00'),
-    (34, 4, 'Yoga in the morning changed my life', '2024-01-25 07:00:00'),
-    (35, 5, 'New gaming setup is finally complete', '2024-01-25 19:00:00'),
-    (36, 6, 'Remember to drink water throughout the day', '2024-01-26 10:00:00'),
-    (37, 7, 'That feeling when your tests pass on first try', '2024-01-26 11:30:00'),
-    (38, 8, 'Looking for a workout buddy anyone interested?', '2024-01-26 17:00:00'),
-    (39, 9, 'The ocean is calling and I must go', '2024-01-27 14:00:00'),
-    (40, 10, 'Best podcast episodes of 2024? Drop them below', '2024-01-27 16:00:00'),
-    (41, 1, 'Refactored 500 lines down to 50 feels good', '2024-01-28 10:30:00'),
-    (42, 2, 'Documentation is a love letter to your future self', '2024-01-28 13:00:00'),
-    (43, 3, 'Sketch of the day: urban landscape', '2024-01-28 18:00:00'),
-    (44, 4, 'Plants are thriving! Green thumb achieved', '2024-01-29 09:00:00'),
-    (45, 5, 'Charity stream raised $5000! You all are amazing', '2024-01-29 22:00:00'),
-    (46, 6, 'First time trying rock climbing was terrifying', '2024-01-30 11:00:00'),
-    (47, 7, 'AI is changing everything so fast', '2024-01-30 15:00:00'),
-    (48, 8, 'Meal prep Sunday is a game changer', '2024-01-30 17:00:00'),
-    (49, 9, 'Stargazing tonight the meteors are visible', '2024-01-31 21:00:00'),
-    (50, 10, 'January recap: new job new goals new me', '2024-01-31 23:00:00'),
-    (51, 1, 'February goals: learn Go, run a half marathon', '2024-02-01 08:00:00'),
-    (52, 3, 'Commission slots are now open!', '2024-02-01 12:00:00'),
-    (53, 5, 'New video is live go watch it!', '2024-02-01 18:00:00'),
-    (54, 7, 'Open source contribution accepted! First time!', '2024-02-02 10:00:00'),
-    (55, 9, 'Sometimes you just need a mental health day', '2024-02-02 14:00:00');
+INSERT INTO accounts (account_id, person_id, username, created_date) VALUES 
+(101, 1, 'alice_wonder', '2023-01-01 10:00:00'),
+(102, 2, 'bobby_tables', '2023-01-05 11:30:00'),
+(103, 3, 'chuck_rocks', '2023-02-10 09:15:00');
+
+INSERT INTO follows (follow_id, from_id, to_id, created_date) VALUES 
+(1, 101, 102, '2023-01-06 12:00:00'),
+(2, 102, 103, '2023-02-15 08:45:00'),
+(3, 103, 101, '2023-03-01 15:20:00');
+
+INSERT INTO posts (post_id, account_id, topic_id, title, body, created_date) VALUES 
+(501, 101, 10, 'Hello World', 'This is my first post!', '2023-01-01 12:00:00'),
+(502, 102, 20, 'SQL Tips', 'Always remember to order your columns correctly.', '2023-01-10 14:30:00'),
+(503, 103, 10, 'Random Thought', 'Why is the sky blue?', '2023-02-20 16:45:00');
+
+INSERT INTO topics (topic_id, account_id, topic_name, description, created_date) VALUES
+(10, 101, 'General', 'A place for random thoughts and hellos.', '2023-01-01 09:00:00'),
+(20, 102, 'Tech Tips', 'Discussing SQL, coding, and best practices.', '2023-01-05 10:00:00');
+
+INSERT INTO likes (like_id, post_id, account_id, like_type) VALUES
+(1, 501, 102, 1),
+(2, 502, 103, 1),
+(3, 501, 103, 1);
+
+INSERT INTO replies (reply_id, post_id, account_id, body, created_date) VALUES
+(1, 501, 102, 'Welcome to the platform, Alice!', '2023-01-01 13:00:00'),
+(2, 502, 101, 'Great tip, very helpful.', '2023-01-11 09:00:00');
+
+INSERT INTO blocks (block_id, from_id, to_id) VALUES
+(1, 101, 103);
+
+INSERT INTO passwords (password_id, account_id, secure_password) VALUES
+(1, 101, 'hashed_password_123'),
+(2, 102, 'hashed_password_456'),
+(3, 103, 'hashed_password_789');
