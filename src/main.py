@@ -118,7 +118,7 @@ async def create_post(request: Request):
 
 
 @app.post("/topics")
-async def create_post(request: Request):
+async def create_topic(request: Request):
     body = await request.json()
     query = """
         INSERT INTO topics (account_id, topic_name, description, created_date)
@@ -166,7 +166,58 @@ async def create_password(request: Request):
     """
     return run_query(query, (body["account_id"], body["secure_password"]))
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
-
 
 ##### START DELETES #####
+
+@app.delete("/people/{person_id}")
+async def delete_person(person_id: int):
+    return run_query("DELETE FROM people WHERE person_id = ?", (person_id,))
+
+
+@app.delete("/accounts/{account_id}")
+async def delete_account(account_id: int):
+    return run_query("DELETE FROM accounts WHERE account_id = ?", (account_id,))
+
+
+@app.delete("/follows")
+async def delete_follow(request: Request):
+    body = await request.json()
+    return run_query("DELETE FROM follows WHERE from_id = ? AND to_id = ?", (body["from_id"], body["to_id"]))
+
+
+@app.delete("/posts/{post_id}")
+async def delete_post(post_id: int):
+    return run_query("DELETE FROM posts WHERE post_id = ?", (post_id,))
+
+
+@app.delete("/topics/{topic_id}")
+async def delete_topic(topic_id: int):
+    return run_query("DELETE FROM topics WHERE topic_id = ?", (topic_id,))
+
+
+@app.delete("/likes")
+async def delete_like(request: Request):
+    body = await request.json()
+    return run_query("DELETE FROM likes WHERE account_id = ? AND post_id = ?", (body["account_id"], body["post_id"]))
+
+
+@app.delete("/replies/{reply_id}")
+async def delete_reply(reply_id: int):
+    return run_query("DELETE FROM replies WHERE reply_id = ?", (reply_id,))
+
+
+@app.delete("/blocks")
+async def delete_block(request: Request):
+    body = await request.json()
+    return run_query("DELETE FROM blocks WHERE from_id = ? AND to_id = ?", (body["from_id"], body["to_id"]))
+
+
+@app.delete("/passwords/{password_id}")
+async def delete_password(password_id: int):
+    return run_query("DELETE FROM passwords WHERE password_id = ?", (password_id,))
+
+
+##### ENABLE STATIC FOLDER #####
+
+
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
