@@ -1,16 +1,11 @@
 import sqlite3
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-from pydantic import BaseModel
+
 
 DB_PATH = Path("database.db")
 app = FastAPI(title="Social Network API", version="1.0.0")
-
-
-class PostCreate(BaseModel):
-    username: str
-    content: str
 
 
 def run_query(query: str, params: tuple = ()) -> list:
@@ -24,15 +19,13 @@ def run_query(query: str, params: tuple = ()) -> list:
     return [dict(row) for row in rows]
 
 
+##### START GETS #####
+
+
 @app.get("/posts")
 async def get_posts():
     query = """
-        SELECT 
-            p.post_id as id,
-            a.username as display_name,
-            a.username,
-            p.body as content,
-            p.created_date as created_at
+        SELECT *
         FROM posts p
         JOIN accounts a ON p.account_id = a.account_id
         ORDER BY p.created_date DESC
@@ -43,12 +36,7 @@ async def get_posts():
 @app.get("/posts/{username}")
 async def get_posts_by_user(username: str):
     query = """
-        SELECT 
-            p.post_id as id,
-            a.username as display_name,
-            a.username,
-            p.body as content,
-            p.created_date as created_at
+        SELECT *
         FROM posts p
         JOIN accounts a ON p.account_id = a.account_id
         WHERE a.username = ?
@@ -57,39 +45,128 @@ async def get_posts_by_user(username: str):
     return run_query(query, (username,))
 
 
-@app.post("/posts")
-async def create_post(post: PostCreate):
-    account_query = "SELECT account_id FROM accounts WHERE username = ?"
-    account_result = run_query(account_query, (post.username,))
-    
-    if not account_result:
-        insert_person_query = "INSERT INTO people (name, email) VALUES (?, ?)"
-        run_query(insert_person_query, (post.username, f"{post.username}@example.com"))
-        
-        person_query = "SELECT person_id FROM people WHERE name = ?"
-        person_result = run_query(person_query, (post.username,))
-        person_id = person_result[0]["person_id"]
-        
-        insert_account_query = """
-            INSERT INTO accounts (person_id, username, created_date) 
-            VALUES (?, ?, CURRENT_TIMESTAMP)
-        """
-        run_query(insert_account_query, (person_id, post.username))
-        
-        account_result = run_query(account_query, (post.username,))
-    
-    account_id = account_result[0]["account_id"]
-    
-    insert_post_query = """
-        INSERT INTO posts (account_id, body, created_date, title) 
-        VALUES (?, ?, CURRENT_TIMESTAMP, 'New Post')
+@app.get("/accounts")
+async def get_accounts():
+    query = """
+        SELECT *
+        FROM accounts
     """
-    run_query(insert_post_query, (account_id, post.content))
-    
-    return {
-        "status": "success",
-        "message": f"Post created for {post.username}"
-    }
+    return run_query(query)
 
+
+@app.get("/people")
+async def get_people():
+    query = """
+        SELECT *
+        FROM people
+    """
+    return run_query(query)
+
+
+@app.get("/follows/{account_id}")
+async def get_follows(account_id: int):
+    query = """
+        SELECT a.account_id
+        FROM follows f
+        JOIN accounts a ON f.to_id = a.account_id
+        WHERE f.from_id = ?
+    """
+    return run_query(query, (account_id,))  # the comma in the tuple is required for some reason...
+
+
+##### START INSERTS #####
+
+
+@app.post("/people")
+async def create_person(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO people (email, name, birthday)
+        VALUES (?, ?, ?)
+    """
+    return run_query(query, (body["email"], body["name"], body["birthday"]))
+
+
+@app.post("/accounts")
+async def create_account(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO accounts (person_id, username, created_date)
+        VALUES (?, ?, ?)
+    """
+    return run_query(query, (body["person_id"], body["username"], body["created_date"]))
+
+
+@app.post("/follows")
+async def create_follow_relationship(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO follows (from_id, to_id, created_date)
+        VALUES (?, ?, ?)
+    """
+    return run_query(query, (body["from_id"], body["to_id"], body["created_date"]))
+
+
+@app.post("/posts")
+async def create_post(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO posts (account_id, topic_id, title, body, created_date)
+        VALUES (?, ?, ?, ?, ?)
+    """
+    return run_query(query, (body["account_id"], body["topic_id"], body["title"], body["body"], body["created_date"]))
+
+
+@app.post("/topics")
+async def create_post(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO topics (account_id, topic_name, description, created_date)
+        VALUES (?, ?, ?, ?)
+    """
+    return run_query(query, (body["account_id"], body["topic_name"], body["description"], body["created_date"]))
+
+
+@app.post("/likes")
+async def create_like(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO likes (account_id, post_id, like_type)
+        VALUES (?, ?, ?)
+    """
+    return run_query(query, (body["account_id"], body["post_id"], body["like_type"]))
+
+
+@app.post("/replies")
+async def create_reply(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO replies (account_id, post_id, body, created_date)
+        VALUES (?, ?, ?, ?)
+    """
+    return run_query(query, (body["account_id"], body["post_id"], body["body"], body["created_date"]))
+
+
+@app.post("/blocks")
+async def create_block(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO blocks (from_id, to_id)
+        VALUES (?, ?)
+    """
+    return run_query(query, (body["from_id"], body["to_id"]))
+
+
+@app.post("/passwords")
+async def create_password(request: Request):
+    body = await request.json()
+    query = """
+        INSERT INTO passwords (account_id, secure_password)
+        VALUES (?, ?)
+    """
+    return run_query(query, (body["account_id"], body["secure_password"]))
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+
+##### START DELETES #####
