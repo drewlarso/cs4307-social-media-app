@@ -2,9 +2,15 @@ import sqlite3
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+from pydantic import BaseModel
 
-DB_PATH = Path("custom_database.db")
+DB_PATH = Path("database.db")
 app = FastAPI(title="Social Network API", version="1.0.0")
+
+
+class PostCreate(BaseModel):
+    username: str
+    content: str
 
 
 def run_query(query: str, params: tuple = ()) -> list:
@@ -21,10 +27,15 @@ def run_query(query: str, params: tuple = ()) -> list:
 @app.get("/posts")
 async def get_posts():
     query = """
-        SELECT *
-        FROM post p
-        JOIN user u ON p.user_id = u.id
-        ORDER BY p.created_at DESC
+        SELECT 
+            p.post_id as id,
+            a.username as display_name,
+            a.username,
+            p.body as content,
+            p.created_date as created_at
+        FROM posts p
+        JOIN accounts a ON p.account_id = a.account_id
+        ORDER BY p.created_date DESC
     """
     return run_query(query)
 
@@ -32,35 +43,52 @@ async def get_posts():
 @app.get("/posts/{username}")
 async def get_posts_by_user(username: str):
     query = """
-        SELECT *
-        FROM post p
-        JOIN user u ON p.user_id = u.id
-        WHERE u.display_name = ?
-        ORDER BY p.created_at DESC
+        SELECT 
+            p.post_id as id,
+            a.username as display_name,
+            a.username,
+            p.body as content,
+            p.created_date as created_at
+        FROM posts p
+        JOIN accounts a ON p.account_id = a.account_id
+        WHERE a.username = ?
+        ORDER BY p.created_date DESC
     """
     return run_query(query, (username,))
 
 
 @app.post("/posts")
 async def create_post(post: PostCreate):
-    user_query = "SELECT id FROM user WHERE display_name = ?"
-    user_result = run_query(user_query, (post.username,))
+    account_query = "SELECT account_id FROM accounts WHERE username = ?"
+    account_result = run_query(account_query, (post.username,))
     
-    if not user_result:
-        insert_user_query = "INSERT INTO user (display_name) VALUES (?)"
-        run_query(insert_user_query, (post.username,))
+    if not account_result:
+        insert_person_query = "INSERT INTO people (name, email) VALUES (?, ?)"
+        run_query(insert_person_query, (post.username, f"{post.username}@example.com"))
         
-        user_result = run_query(user_query, (post.username,))
+        person_query = "SELECT person_id FROM people WHERE name = ?"
+        person_result = run_query(person_query, (post.username,))
+        person_id = person_result[0]["person_id"]
+        
+        insert_account_query = """
+            INSERT INTO accounts (person_id, username, created_date) 
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+        """
+        run_query(insert_account_query, (person_id, post.username))
+        
+        account_result = run_query(account_query, (post.username,))
     
-    user_id = user_result[0]["id"]
+    account_id = account_result[0]["account_id"]
     
-    insert_post_query = "INSERT INTO post (user_id, content) VALUES (?, ?)"
-    run_query(insert_post_query, (user_id, post.content))
+    insert_post_query = """
+        INSERT INTO posts (account_id, body, created_date, title) 
+        VALUES (?, ?, CURRENT_TIMESTAMP, 'New Post')
+    """
+    run_query(insert_post_query, (account_id, post.content))
     
     return {
-        "status": "success", 
-        "message": f"Post created for {post.username}",
-        "user_created": not user_result
+        "status": "success",
+        "message": f"Post created for {post.username}"
     }
 
 
