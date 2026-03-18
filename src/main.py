@@ -285,6 +285,15 @@ async def create_block(request: Request):
     return run_query(query, (body["from_id"], body["to_id"]))
 
 
+@app.get("/passwords")
+async def get_passwords():
+    query = """
+        SELECT *
+        FROM passwords
+    """
+    return run_query(query)
+
+
 @app.post("/passwords")
 async def create_password(request: Request):
     body = await request.json()

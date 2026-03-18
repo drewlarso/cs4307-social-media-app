@@ -20,7 +20,11 @@ INSERT INTO posts (post_id, account_id, topic_id, title, body, created_date) VAL
 
 INSERT INTO topics (topic_id, account_id, topic_name, description, created_date) VALUES
 (10, 101, 'General', 'A place for random thoughts and hellos.', '2023-01-01 09:00:00'),
-(20, 102, 'Tech Tips', 'Discussing SQL, coding, and best practices.', '2023-01-05 10:00:00');
+(20, 102, 'Tech Tips', 'Discussing SQL, coding, and best practices.', '2023-01-05 10:00:00'),
+(21, 102, 'Gaming', 'Video games, consoles, and gaming culture.', '2023-01-05 10:00:00'),
+(22, 102, 'Sports', 'Professional and amateur sports.', '2023-01-05 10:00:00'),
+(23, 102, 'Music', 'Concerts, albums, and music discussions.', '2023-01-05 10:00:00'),
+(24, 102, 'Movies', 'Film, television, and streaming.', '2023-01-05 10:00:00');
 
 INSERT INTO likes (like_id, post_id, account_id, like_type) VALUES
 (1, 501, 102, 1),
@@ -30,9 +34,6 @@ INSERT INTO likes (like_id, post_id, account_id, like_type) VALUES
 INSERT INTO replies (reply_id, post_id, account_id, body, created_date) VALUES
 (1, 501, 102, 'Welcome to the platform, Alice!', '2023-01-01 13:00:00'),
 (2, 502, 101, 'Great tip, very helpful.', '2023-01-11 09:00:00');
-
-INSERT INTO blocks (block_id, from_id, to_id) VALUES
-(1, 101, 103);
 
 INSERT INTO passwords (password_id, account_id, secure_password) VALUES
 (1, 101, 'hashed_password_123'),

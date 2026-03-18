@@ -243,5 +243,18 @@ const API = {
         const response = await fetch(`/accounts/${accountId}/is-blocking?target_id=${targetId}&t=${Date.now()}`)
         const data = await response.json()
         return data.blocking
+    },
+
+    // Create a password for an account
+    async createPassword(accountId, password) {
+        const response = await fetch('/passwords', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                account_id: accountId,
+                secure_password: password
+            })
+        })
+        return await response.json()
     }
 }
