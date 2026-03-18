@@ -8,12 +8,6 @@ A simple social network implementation with database schema, REST API, and inter
 - Daniel
 - Hayden
 
-## Setup
+## Notes
 
-This project uses UV for Python package management.
-
-### Install UV (if not already installed)
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+If the frontend isn't working properly, log out and log back in. The account needs to be remade if the database is reset.

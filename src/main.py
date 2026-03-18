@@ -23,26 +23,52 @@ def run_query(query: str, params: tuple = ()) -> list:
 
 
 @app.get("/posts")
-async def get_posts():
+async def get_posts(viewer_id: int | None = None):
     query = """
         SELECT *
         FROM posts p
         JOIN accounts a ON p.account_id = a.account_id
+        WHERE (? IS NULL OR p.account_id NOT IN (
+            SELECT to_id FROM blocks WHERE from_id = ?
+        ))
         ORDER BY p.created_date DESC
     """
-    return run_query(query)
+    return run_query(query, (viewer_id, viewer_id))
 
 
 @app.get("/posts/{username}")
-async def get_posts_by_user(username: str):
+async def get_posts_by_user(username: str, viewer_id: int | None = None):
     query = """
         SELECT *
         FROM posts p
         JOIN accounts a ON p.account_id = a.account_id
         WHERE a.username = ?
+        AND (? IS NULL OR p.account_id NOT IN (
+            SELECT to_id FROM blocks WHERE from_id = ?
+        ))
         ORDER BY p.created_date DESC
     """
-    return run_query(query, (username,))
+    return run_query(query, (username, viewer_id, viewer_id))
+
+
+@app.get("/accounts/{account_id}/feed")
+async def get_account_feed(account_id: int):
+    query = """
+        SELECT *
+        FROM posts p
+        JOIN accounts a ON p.account_id = a.account_id
+        WHERE (p.account_id = ? 
+           OR p.account_id IN (
+               SELECT to_id 
+               FROM follows 
+               WHERE from_id = ?
+           ))
+           AND p.account_id NOT IN (
+               SELECT to_id FROM blocks WHERE from_id = ?
+           )
+        ORDER BY p.created_date DESC
+    """
+    return run_query(query, (account_id, account_id, account_id))
 
 
 @app.get("/accounts")
@@ -72,6 +98,108 @@ async def get_follows(account_id: int):
         WHERE f.from_id = ?
     """
     return run_query(query, (account_id,))  # the comma in the tuple is required for some reason...
+
+
+@app.get("/accounts/{account_id}/followers")
+async def get_followers(account_id: int):
+    query = """
+        SELECT a.account_id, a.username
+        FROM follows f
+        JOIN accounts a ON f.from_id = a.account_id
+        WHERE f.to_id = ?
+    """
+    return run_query(query, (account_id,))
+
+
+@app.get("/accounts/{account_id}/following")
+async def get_following(account_id: int):
+    query = """
+        SELECT a.account_id, a.username
+        FROM follows f
+        JOIN accounts a ON f.to_id = a.account_id
+        WHERE f.from_id = ?
+    """
+    return run_query(query, (account_id,))
+
+
+@app.get("/accounts/{account_id}/is-following")
+async def is_following(account_id: int, target_id: int):
+    query = """
+        SELECT COUNT(*) as count
+        FROM follows
+        WHERE from_id = ? AND to_id = ?
+    """
+    result = run_query(query, (account_id, target_id))
+    return { "following": result[0]["count"] > 0 }
+
+
+@app.get("/accounts/{account_id}/is-blocking")
+async def is_blocking(account_id: int, target_id: int):
+    query = """
+        SELECT COUNT(*) as count
+        FROM blocks
+        WHERE from_id = ? AND to_id = ?
+    """
+    result = run_query(query, (account_id, target_id))
+    return { "blocking": result[0]["count"] > 0 }
+
+
+@app.get("/blocks/{account_id}")
+async def get_blocked_users(account_id: int):
+    query = """
+        SELECT a.account_id, a.username
+        FROM blocks b
+        JOIN accounts a ON b.to_id = a.account_id
+        WHERE b.from_id = ?
+    """
+    return run_query(query, (account_id,))
+
+
+@app.get("/topics")
+async def get_topics():
+    query = """
+        SELECT *
+        FROM topics
+        ORDER BY created_date DESC
+    """
+    return run_query(query)
+
+
+@app.get("/topics/{topic_id}/posts")
+async def get_posts_by_topic(topic_id: int, viewer_id: int | None = None):
+    query = """
+        SELECT *
+        FROM posts p
+        JOIN accounts a ON p.account_id = a.account_id
+        WHERE p.topic_id = ?
+        AND (? IS NULL OR p.account_id NOT IN (
+            SELECT to_id FROM blocks WHERE from_id = ?
+        ))
+        ORDER BY p.created_date DESC
+    """
+    return run_query(query, (topic_id, viewer_id, viewer_id))
+
+
+@app.get("/posts/{post_id}/likes")
+async def get_likes_by_post(post_id: int):
+    query = """
+        SELECT *
+        FROM likes
+        WHERE post_id = ?
+    """
+    return run_query(query, (post_id,))
+
+
+@app.get("/posts/{post_id}/replies")
+async def get_replies_by_post(post_id: int):
+    query = """
+        SELECT r.*, a.username
+        FROM replies r
+        JOIN accounts a ON r.account_id = a.account_id
+        WHERE r.post_id = ?
+        ORDER BY r.created_date ASC
+    """
+    return run_query(query, (post_id,))
 
 
 ##### START INSERTS #####
