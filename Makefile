@@ -1,4 +1,4 @@
-.PHONY: run database clean shell test reset
+.PHONY: run database clean shell
 
 run: database
 	PYTHONPATH="${PYTHONPATH}:${PWD}/src" uv run fastapi dev src/main.py
@@ -11,13 +11,3 @@ clean:
 
 shell: database
 	sqlite3 database.db
-
-test: database
-	PYTHONPATH="${PYTHONPATH}:${PWD}/src" uv run python tests/test_queries.py
-
-reset: clean database
-	@echo "Database reset complete!"
-
-custom:
-	uv run src/init_custom_db.py
-	uv run fastapi dev src/main.py
