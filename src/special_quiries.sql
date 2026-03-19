@@ -26,5 +26,5 @@ FROM follows AS f
 JOIN posts AS p on f.to_id = p.account_id 
 LEFT JOIN likes AS l on p.post_id = l.post_id 
 WHERE from_id = ? 
-GROUP BY f.to_idJOIN 
+GROUP BY f.to_id
 ORDER BY ratio desc;

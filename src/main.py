@@ -130,7 +130,7 @@ async def is_following(account_id: int, target_id: int):
         WHERE from_id = ? AND to_id = ?
     """
     result = run_query(query, (account_id, target_id))
-    return { "following": result[0]["count"] > 0 }
+    return {"following": result[0]["count"] > 0}
 
 
 @app.get("/accounts/{account_id}/is-blocking")
@@ -141,7 +141,7 @@ async def is_blocking(account_id: int, target_id: int):
         WHERE from_id = ? AND to_id = ?
     """
     result = run_query(query, (account_id, target_id))
-    return { "blocking": result[0]["count"] > 0 }
+    return {"blocking": result[0]["count"] > 0}
 
 
 @app.get("/blocks/{account_id}")
@@ -200,6 +200,52 @@ async def get_replies_by_post(post_id: int):
         ORDER BY r.created_date ASC
     """
     return run_query(query, (post_id,))
+
+
+@app.get("/accounts/{account_id}/recommended-posts")
+async def get_recommended_posts(account_id: int):
+    query = """
+        SELECT p.post_id AS reccomended_post_id, count() AS likes
+        FROM follows AS f
+        JOIN likes AS l ON f.to_id = l.account_id
+        JOIN posts AS p ON l.post_id = p.post_id
+        WHERE f.from_id = ?
+        AND p.account_id != ?
+        AND p.account_id NOT IN (SELECT to_id FROM follows WHERE from_id = ?)
+        GROUP BY p.post_id
+        ORDER BY likes desc;
+    """
+    return run_query(query, (account_id, account_id, account_id))
+
+
+@app.get("/accounts/{account_id}/recommended-accounts")
+async def get_recommended_posts(account_id: int):
+    query = """
+    SELECT p.account_id AS reccomended_accounts, count() AS likes
+    FROM follows AS f
+    JOIN likes AS l ON f.to_id = l.account_id
+    JOIN posts AS p ON l.post_id = p.post_id
+    WHERE f.from_id = ?
+    AND p.account_id != ?
+    AND p.account_id NOT IN(SELECT to_id FROM follows WHERE from_id=?)
+    GROUP BY p.account_id
+    ORDER BY likes desc;
+    """
+    return run_query(query, (account_id, account_id, account_id))
+
+
+@app.get("/accounts/{account_id}/popular-follows")
+async def get_popular_follows(account_id: int):
+    query = """
+        SELECT f.to_id AS followed_account, (count(DISTINCT l.like_id)*1.0)/(count(DISTINCT p.post_id)*1.0) AS ratio
+        FROM follows AS f
+        JOIN posts AS p on f.to_id = p.account_id
+        LEFT JOIN likes AS l on p.post_id = l.post_id
+        WHERE from_id = ?
+        GROUP BY f.to_id
+        ORDER BY ratio desc;
+    """
+    return run_query(query, (account_id,))
 
 
 ##### START INSERTS #####
