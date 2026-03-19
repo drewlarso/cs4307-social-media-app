@@ -256,5 +256,86 @@ const API = {
             })
         })
         return await response.json()
+    },
+
+    // NEW METHODS FOR RECOMMENDATIONS
+    
+    // Fetch recommended posts for an account
+    async fetchRecommendedPosts(accountId) {
+        const response = await fetch(`/accounts/${accountId}/recommended-posts?t=${Date.now()}`)
+        const data = await response.json()
+        // Get full post details for each recommended post
+        const recommendedPosts = []
+        for (const item of data) {
+            try {
+                // Fetch the actual post data
+                const postResponse = await fetch(`/posts?t=${Date.now()}`)
+                const allPosts = await postResponse.json()
+                const post = allPosts.find(p => p.post_id === item.reccomended_post_id)
+                if (post) {
+                    recommendedPosts.push({
+                        ...this.transformPost(post),
+                        like_count: item.likes,
+                        recommendation_score: item.likes
+                    })
+                }
+            } catch (error) {
+                console.error('Error fetching post details:', error)
+            }
+        }
+        return recommendedPosts
+    },
+
+    // Fetch recommended accounts for an account
+    async fetchRecommendedAccounts(accountId) {
+        const response = await fetch(`/accounts/${accountId}/recommended-accounts?t=${Date.now()}`)
+        const data = await response.json()
+        
+        // Get full account details for each recommended account
+        const recommendedAccounts = []
+        for (const item of data) {
+            try {
+                const accounts = await this.fetchAccounts()
+                const account = accounts.find(a => a.account_id === item.reccomended_accounts)
+                if (account) {
+                    recommendedAccounts.push({
+                        account_id: account.account_id,
+                        username: account.username,
+                        like_count: item.likes,
+                        recommendation_score: item.likes
+                    })
+                }
+            } catch (error) {
+                console.error('Error fetching account details:', error)
+            }
+        }
+        return recommendedAccounts
+    },
+
+    // Fetch popular follows (accounts you follow ranked by engagement)
+    async fetchPopularFollows(accountId) {
+        const response = await fetch(`/accounts/${accountId}/popular-follows?t=${Date.now()}`)
+        const data = await response.json()
+        
+        // Get full account details for each popular follow
+        const popularFollows = []
+        for (const item of data) {
+            try {
+                const accounts = await this.fetchAccounts()
+                const account = accounts.find(a => a.account_id === item.followed_account)
+                if (account) {
+                    popularFollows.push({
+                        account_id: account.account_id,
+                        username: account.username,
+                        engagement_ratio: item.ratio,
+                        post_count: item.post_count,
+                        like_count: item.like_count
+                    })
+                }
+            } catch (error) {
+                console.error('Error fetching account details:', error)
+            }
+        }
+        return popularFollows
     }
 }

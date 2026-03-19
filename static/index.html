@@ -46,31 +46,57 @@
                 @unblock="handleUnblock"
             ></user-list-modal>
             <main class="p-6 max-w-6xl mx-auto">
-                <div v-if="currentTab === 'home'" class="space-y-4">
-                    <!-- Post Input (only on home tab) -->
-                    <post-input
-                        v-model="newPostContent"
-                        :username="username"
-                        @submit="submitPost"
-                    ></post-input>
+                <!-- Home Tab with Recommendations Sidebar -->
+                <div v-if="currentTab === 'home'" class="flex gap-6">
+                    <!-- Main Feed Column -->
+                    <div class="flex-1 space-y-4">
+                        <!-- Post Input -->
+                        <post-input
+                            v-model="newPostContent"
+                            :username="username"
+                            @submit="submitPost"
+                        ></post-input>
 
-                    <post-item
-                        v-for="post in posts"
-                        :key="post.post_id"
-                        :post-id="post.post_id"
-                        :account-id="parseInt(accountId)"
-                        :poster-account-id="post.account_id"
-                        :username="post.username"
-                        :content="post.content"
-                        :title="post.title"
-                        :created-at="post.created_at"
-                    ></post-item>
+                        <post-item
+                            v-for="post in posts"
+                            :key="post.post_id"
+                            :post-id="post.post_id"
+                            :account-id="parseInt(accountId)"
+                            :poster-account-id="post.account_id"
+                            :username="post.username"
+                            :content="post.content"
+                            :title="post.title"
+                            :created-at="post.created_at"
+                        ></post-item>
 
-                    <div v-if="posts.length === 0" class="text-center text-[var(--color-text-muted)] py-8">
-                        No posts yet
+                        <div v-if="posts.length === 0" class="text-center text-[var(--color-text-muted)] py-8">
+                            No posts yet
+                        </div>
+                    </div>
+                    
+                    <!-- Recommendations Sidebar - Only show when logged in -->
+                    <div v-if="username && showRecommendations" class="w-80 space-y-4">
+                        <recommended-posts
+                            :account-id="parseInt(accountId)"
+                            @view-post="viewRecommendedPost"
+                            @view-all-posts="viewAllRecommendedPosts"
+                        ></recommended-posts>
+                        
+                        <recommended-accounts
+                            :account-id="parseInt(accountId)"
+                            :current-username="username"
+                            @view-profile="viewUserProfile"
+                            @view-all-accounts="viewAllRecommendedAccounts"
+                        ></recommended-accounts>
+                        
+                        <popular-follows
+                            :account-id="parseInt(accountId)"
+                            @view-profile="viewUserProfile"
+                        ></popular-follows>
                     </div>
                 </div>
 
+                <!-- Discover Tab -->
                 <div v-else-if="currentTab === 'discover'" class="space-y-4">
                     <!-- Topic Grid View -->
                     <template v-if="!selectedTopic">
@@ -88,7 +114,7 @@
                             No topics yet
                         </div>
                     </template>
-                    
+
                     <!-- Topic Posts View -->
                     <template v-else>
                         <div class="flex items-center gap-4 mb-4">
@@ -117,12 +143,13 @@
                     </template>
                 </div>
 
+                <!-- Profile Tab -->
                 <div v-else-if="currentTab === 'profile'" class="space-y-4">
                     <!-- Profile Header -->
                     <div class="rounded-xl border border-[var(--color-border-dark)] p-6" style="background-color: var(--color-surface-dark);">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="w-16 h-16 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-2xl">
-                                {{ username.charAt(0).toUpperCase() }}
+                                {{ username ? username.charAt(0).toUpperCase() : '?' }}
                             </div>
                             <div class="flex-1">
                                 <h2 class="text-xl font-bold text-white">@{{ username }}</h2>
@@ -162,7 +189,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <post-item
                         v-for="post in profilePosts"
                         :key="post.post_id"
@@ -180,11 +207,13 @@
                     </div>
                 </div>
 
+                <!-- Other tabs fallback -->
                 <div v-else class="rounded-xl p-6">
                     {{ message }}
                 </div>
             </main>
         </div>
+        <!-- Scripts - Order matters! -->
         <script src="api.js"></script>
         <script src="components/Navbar.js"></script>
         <script src="components/LoginPopup.js"></script>
@@ -192,6 +221,11 @@
         <script src="components/Post.js"></script>
         <script src="components/TopicCard.js"></script>
         <script src="components/UserListModal.js"></script>
+        <!-- New recommendation components -->
+        <script src="components/RecommendedPosts.js"></script>
+        <script src="components/RecommendedAccounts.js"></script>
+        <script src="components/PopularFollows.js"></script>
+        <!-- Main app must be last -->
         <script src="app.js"></script>
     </body>
 </html>
