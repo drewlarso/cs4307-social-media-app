@@ -202,7 +202,9 @@ const API = {
 
     // Fetch replies for a post - UPDATED to filter blocked
     async fetchRepliesByPost(postId, viewerId = null) {
-        const response = await fetch(`/posts/${postId}/replies?t=${Date.now()}`)
+        let url = `/posts/${postId}/replies?t=${Date.now()}`
+        if (viewerId) url += `&user_id=${viewerId}`
+        const response = await fetch(url)
         const data = await response.json()
         const replies = data.map(reply => ({
             reply_id: reply.reply_id,

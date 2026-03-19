@@ -191,15 +191,18 @@ async def get_likes_by_post(post_id: int):
 
 
 @app.get("/posts/{post_id}/replies")
-async def get_replies_by_post(post_id: int):
+async def get_replies_by_post(post_id: int, user_id: int):
     query = """
         SELECT r.*, a.username
         FROM replies r
         JOIN accounts a ON r.account_id = a.account_id
         WHERE r.post_id = ?
+        AND (? IS NULL OR r.account_id NOT IN (
+            SELECT to_id FROM blocks WHERE from_id = ?
+        ))
         ORDER BY r.created_date ASC
     """
-    return run_query(query, (post_id,))
+    return run_query(query, (post_id, user_id, user_id))
 
 
 @app.get("/accounts/{account_id}/recommended-posts")
