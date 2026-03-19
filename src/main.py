@@ -191,7 +191,7 @@ async def get_likes_by_post(post_id: int):
 
 
 @app.get("/posts/{post_id}/replies")
-async def get_replies_by_post(post_id: int, user_id: int):
+async def get_replies_by_post(post_id: int, user_id: int | None = None):
     query = """
         SELECT r.*, a.username
         FROM replies r
