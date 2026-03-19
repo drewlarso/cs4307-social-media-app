@@ -200,25 +200,19 @@ const API = {
         return likes.length
     },
 
-    // Fetch replies for a post - UPDATED to filter blocked
+    // Fetch replies for a post - backend already filters blocked accounts
     async fetchRepliesByPost(postId, viewerId = null) {
         let url = `/posts/${postId}/replies?t=${Date.now()}`
-        if (viewerId) url += `&user_id=${viewerId}`
+        if (viewerId) url += `&viewer_id=${viewerId}`
         const response = await fetch(url)
         const data = await response.json()
-        const replies = data.map(reply => ({
+        return data.map(reply => ({
             reply_id: reply.reply_id,
             username: reply.username,
             content: reply.body,
             created_at: reply.created_date,
             account_id: reply.account_id
         }))
-        
-        // Filter out replies from blocked accounts
-        if (viewerId) {
-            return await this.filterBlockedContent(viewerId, replies, 'reply')
-        }
-        return replies
     },
 
     // Create a reply

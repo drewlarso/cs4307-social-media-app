@@ -191,7 +191,7 @@ async def get_likes_by_post(post_id: int):
 
 
 @app.get("/posts/{post_id}/replies")
-async def get_replies_by_post(post_id: int, user_id: int | None = None):
+async def get_replies_by_post(post_id: int, viewer_id: int | None = None):
     query = """
         SELECT r.*, a.username
         FROM replies r
@@ -202,7 +202,7 @@ async def get_replies_by_post(post_id: int, user_id: int | None = None):
         ))
         ORDER BY r.created_date ASC
     """
-    return run_query(query, (post_id, user_id, user_id))
+    return run_query(query, (post_id, viewer_id, viewer_id))
 
 
 @app.get("/accounts/{account_id}/recommended-posts")

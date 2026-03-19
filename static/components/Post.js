@@ -76,8 +76,9 @@ const Post = {
         },
         async loadReplies() {
             if (!this.postId) return
+            const accId = this.accountId || parseInt(localStorage.getItem('accountId'))
             try {
-                this.replies = await API.fetchRepliesByPost(this.postId)
+                this.replies = await API.fetchRepliesByPost(this.postId, accId || null)
             } catch (error) {
                 console.error('Failed to load replies:', error)
                 this.replies = []
