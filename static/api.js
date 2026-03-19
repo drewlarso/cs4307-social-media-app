@@ -1,6 +1,30 @@
 // API utility for interacting with the backend
-
 const API = {
+    // NEW: Helper to filter out blocked accounts
+    async filterBlockedContent(accountId, items, itemType = 'post') {
+        if (!accountId || !items || items.length === 0) return items
+        
+        try {
+            const blockedUsers = await this.getBlockedUsers(parseInt(accountId))
+            const blockedIds = blockedUsers.map(u => u.account_id)
+            
+            if (blockedIds.length === 0) return items
+            
+            // Filter based on item type
+            if (itemType === 'post' || itemType === 'reply') {
+                return items.filter(item => !blockedIds.includes(item.account_id))
+            } else if (itemType === 'account') {
+                return items.filter(item => !blockedIds.includes(item.account_id))
+            } else if (itemType === 'popular') {
+                return items.filter(item => !blockedIds.includes(item.account_id))
+            }
+            return items
+        } catch (error) {
+            console.error('Error filtering blocked content:', error)
+            return items
+        }
+    },
+
     // Transform a post from backend format to frontend format
     transformPost(post) {
         return {
@@ -19,29 +43,44 @@ const API = {
         return posts.map(post => this.transformPost(post))
     },
 
-    // Fetch all posts (for discover tab)
+    // Fetch all posts (for discover tab) - UPDATED to filter blocked
     async fetchAllPosts(viewerId = null) {
         let url = '/posts?t=' + Date.now()
         if (viewerId) url += `&viewer_id=${viewerId}`
         const response = await fetch(url)
         const data = await response.json()
-        return this.transformPosts(data)
+        const posts = this.transformPosts(data)
+        
+        // Filter out posts from blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, posts, 'post')
+        }
+        return posts
     },
 
-    // Fetch posts by username
+    // Fetch posts by username - UPDATED to filter blocked
     async fetchPostsByUsername(username, viewerId = null) {
         let url = `/posts/${encodeURIComponent(username)}?t=${Date.now()}`
         if (viewerId) url += `&viewer_id=${viewerId}`
         const response = await fetch(url)
         const data = await response.json()
-        return this.transformPosts(data)
+        const posts = this.transformPosts(data)
+        
+        // Filter out posts from blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, posts, 'post')
+        }
+        return posts
     },
 
-    // Fetch feed containing posts from user and users they follow
+    // Fetch feed containing posts from user and users they follow - UPDATED to filter blocked
     async fetchUserFeed(accountId) {
         const response = await fetch(`/accounts/${accountId}/feed?t=${Date.now()}`)
         const data = await response.json()
-        return this.transformPosts(data)
+        const posts = this.transformPosts(data)
+        
+        // Filter out posts from blocked accounts
+        return await this.filterBlockedContent(accountId, posts, 'post')
     },
 
     // Fetch all topics
@@ -50,19 +89,31 @@ const API = {
         return await response.json()
     },
 
-    // Fetch posts by topic
+    // Fetch posts by topic - UPDATED to filter blocked
     async fetchPostsByTopic(topicId, viewerId = null) {
         let url = `/topics/${topicId}/posts?t=${Date.now()}`
         if (viewerId) url += `&viewer_id=${viewerId}`
         const response = await fetch(url)
         const data = await response.json()
-        return this.transformPosts(data)
+        const posts = this.transformPosts(data)
+        
+        // Filter out posts from blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, posts, 'post')
+        }
+        return posts
     },
 
-    // Fetch all accounts
-    async fetchAccounts() {
+    // Fetch all accounts - UPDATED to filter blocked
+    async fetchAccounts(viewerId = null) {
         const response = await fetch('/accounts?t=' + Date.now())
-        return await response.json()
+        const data = await response.json()
+        
+        // Filter out blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, data, 'account')
+        }
+        return data
     },
 
     // Create a new person
@@ -125,10 +176,16 @@ const API = {
         return await response.json()
     },
 
-    // Fetch likes for a post
-    async fetchLikesByPost(postId) {
+    // Fetch likes for a post - UPDATED to filter blocked
+    async fetchLikesByPost(postId, viewerId = null) {
         const response = await fetch(`/posts/${postId}/likes?t=${Date.now()}`)
-        return await response.json()
+        const data = await response.json()
+        
+        // Filter out likes from blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, data, 'account')
+        }
+        return data
     },
 
     // Check if user has liked a post
@@ -143,17 +200,23 @@ const API = {
         return likes.length
     },
 
-    // Fetch replies for a post
-    async fetchRepliesByPost(postId) {
+    // Fetch replies for a post - UPDATED to filter blocked
+    async fetchRepliesByPost(postId, viewerId = null) {
         const response = await fetch(`/posts/${postId}/replies?t=${Date.now()}`)
         const data = await response.json()
-        return data.map(reply => ({
+        const replies = data.map(reply => ({
             reply_id: reply.reply_id,
             username: reply.username,
             content: reply.body,
             created_at: reply.created_date,
             account_id: reply.account_id
         }))
+        
+        // Filter out replies from blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, replies, 'reply')
+        }
+        return replies
     },
 
     // Create a reply
@@ -191,16 +254,28 @@ const API = {
         return await response.json()
     },
 
-    // Get followers for an account
-    async getFollowers(accountId) {
+    // Get followers for an account - UPDATED to filter blocked
+    async getFollowers(accountId, viewerId = null) {
         const response = await fetch(`/accounts/${accountId}/followers?t=${Date.now()}`)
-        return await response.json()
+        const data = await response.json()
+        
+        // Filter out blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, data, 'account')
+        }
+        return data
     },
 
-    // Get following for an account
-    async getFollowing(accountId) {
+    // Get following for an account - UPDATED to filter blocked
+    async getFollowing(accountId, viewerId = null) {
         const response = await fetch(`/accounts/${accountId}/following?t=${Date.now()}`)
-        return await response.json()
+        const data = await response.json()
+        
+        // Filter out blocked accounts
+        if (viewerId) {
+            return await this.filterBlockedContent(viewerId, data, 'account')
+        }
+        return data
     },
 
     // Check if account is following another
@@ -214,13 +289,12 @@ const API = {
     async getAccountByUsername(username) {
         const accounts = await this.fetchAccounts()
         return accounts.find(acc => {
-            // Need to get the username from the person - we'll need to fetch people
-            return true // placeholder, will be implemented properly
+            return true
         })
     },
 
     // Create a block
-    async createBlock(fromId, toId, createdDate) {
+    async createBlock(fromId, toId) {
         const response = await fetch('/blocks', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -258,26 +332,29 @@ const API = {
         return await response.json()
     },
 
-    // NEW METHODS FOR RECOMMENDATIONS
-    
-    // Fetch recommended posts for an account
+    // Fetch recommended posts for an account - UPDATED to filter blocked
     async fetchRecommendedPosts(accountId) {
         const response = await fetch(`/accounts/${accountId}/recommended-posts?t=${Date.now()}`)
         const data = await response.json()
-        // Get full post details for each recommended post
         const recommendedPosts = []
+        
         for (const item of data) {
             try {
-                // Fetch the actual post data
                 const postResponse = await fetch(`/posts?t=${Date.now()}`)
                 const allPosts = await postResponse.json()
                 const post = allPosts.find(p => p.post_id === item.reccomended_post_id)
                 if (post) {
-                    recommendedPosts.push({
-                        ...this.transformPost(post),
-                        like_count: item.likes,
-                        recommendation_score: item.likes
-                    })
+                    // Check if post author is blocked
+                    const blockedUsers = await this.getBlockedUsers(accountId)
+                    const blockedIds = blockedUsers.map(u => u.account_id)
+                    
+                    if (!blockedIds.includes(post.account_id)) {
+                        recommendedPosts.push({
+                            ...this.transformPost(post),
+                            like_count: item.likes,
+                            recommendation_score: item.likes
+                        })
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching post details:', error)
@@ -286,24 +363,28 @@ const API = {
         return recommendedPosts
     },
 
-    // Fetch recommended accounts for an account
+    // Fetch recommended accounts for an account - UPDATED to filter blocked
     async fetchRecommendedAccounts(accountId) {
         const response = await fetch(`/accounts/${accountId}/recommended-accounts?t=${Date.now()}`)
         const data = await response.json()
-        
-        // Get full account details for each recommended account
         const recommendedAccounts = []
+        
+        const blockedUsers = await this.getBlockedUsers(accountId)
+        const blockedIds = blockedUsers.map(u => u.account_id)
+        
         for (const item of data) {
             try {
-                const accounts = await this.fetchAccounts()
-                const account = accounts.find(a => a.account_id === item.reccomended_accounts)
-                if (account) {
-                    recommendedAccounts.push({
-                        account_id: account.account_id,
-                        username: account.username,
-                        like_count: item.likes,
-                        recommendation_score: item.likes
-                    })
+                if (!blockedIds.includes(item.reccomended_accounts)) {
+                    const accounts = await this.fetchAccounts()
+                    const account = accounts.find(a => a.account_id === item.reccomended_accounts)
+                    if (account) {
+                        recommendedAccounts.push({
+                            account_id: account.account_id,
+                            username: account.username,
+                            like_count: item.likes,
+                            recommendation_score: item.likes
+                        })
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching account details:', error)
@@ -312,25 +393,27 @@ const API = {
         return recommendedAccounts
     },
 
-    // Fetch popular follows (accounts you follow ranked by engagement)
+    // Fetch popular follows - UPDATED to filter blocked
     async fetchPopularFollows(accountId) {
         const response = await fetch(`/accounts/${accountId}/popular-follows?t=${Date.now()}`)
         const data = await response.json()
-        
-        // Get full account details for each popular follow
         const popularFollows = []
+        
+        const blockedUsers = await this.getBlockedUsers(accountId)
+        const blockedIds = blockedUsers.map(u => u.account_id)
+        
         for (const item of data) {
             try {
-                const accounts = await this.fetchAccounts()
-                const account = accounts.find(a => a.account_id === item.followed_account)
-                if (account) {
-                    popularFollows.push({
-                        account_id: account.account_id,
-                        username: account.username,
-                        engagement_ratio: item.ratio,
-                        post_count: item.post_count,
-                        like_count: item.like_count
-                    })
+                if (!blockedIds.includes(item.followed_account)) {
+                    const accounts = await this.fetchAccounts()
+                    const account = accounts.find(a => a.account_id === item.followed_account)
+                    if (account) {
+                        popularFollows.push({
+                            account_id: account.account_id,
+                            username: account.username,
+                            engagement_ratio: item.ratio
+                        })
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching account details:', error)

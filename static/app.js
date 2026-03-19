@@ -68,7 +68,7 @@ createApp({
         
         async viewPost(post) {
             try {
-                const replies = await API.fetchRepliesByPost(post.post_id)
+                const replies = await API.fetchRepliesByPost(post.post_id, this.accountId)
                 this.selectedPost = post
                 this.postReplies = replies
                 this.showPostModal = true
