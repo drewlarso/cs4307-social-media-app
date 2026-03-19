@@ -45,12 +45,23 @@
                 @close="showBlocksModal = false"
                 @unblock="handleUnblock"
             ></user-list-modal>
+            
+            <!-- Post Modal -->
+            <post-modal
+                :show="showPostModal"
+                :post="selectedPost"
+                :replies="postReplies"
+                :current-username="username"
+                :current-account-id="parseInt(accountId)"
+                @close="closePostModal"
+                @reply-submitted="viewPost(selectedPost)"
+            ></post-modal>
+            
             <main class="p-6 max-w-6xl mx-auto">
                 <!-- Home Tab with Recommendations Sidebar -->
                 <div v-if="currentTab === 'home'" class="flex gap-6">
                     <!-- Main Feed Column -->
                     <div class="flex-1 space-y-4">
-                        <!-- Post Input -->
                         <post-input
                             v-model="newPostContent"
                             :username="username"
@@ -74,7 +85,7 @@
                         </div>
                     </div>
                     
-                    <!-- Recommendations Sidebar - Only show when logged in -->
+                    <!-- Recommendations Sidebar -->
                     <div v-if="username && showRecommendations" class="w-80 space-y-4">
                         <recommended-posts
                             :account-id="parseInt(accountId)"
@@ -98,7 +109,6 @@
 
                 <!-- Discover Tab -->
                 <div v-else-if="currentTab === 'discover'" class="space-y-4">
-                    <!-- Topic Grid View -->
                     <template v-if="!selectedTopic">
                         <h2 class="text-xl font-bold text-white mb-4">Discover Topics</h2>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -115,7 +125,6 @@
                         </div>
                     </template>
 
-                    <!-- Topic Posts View -->
                     <template v-else>
                         <div class="flex items-center gap-4 mb-4">
                             <button
@@ -149,10 +158,10 @@
                     <div class="rounded-xl border border-[var(--color-border-dark)] p-6" style="background-color: var(--color-surface-dark);">
                         <div class="flex items-center gap-4 mb-4">
                             <div class="w-16 h-16 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-2xl">
-                                {{ username ? username.charAt(0).toUpperCase() : '?' }}
+                                {{ viewingUsername ? viewingUsername.charAt(0).toUpperCase() : '?' }}
                             </div>
                             <div class="flex-1">
-                                <h2 class="text-xl font-bold text-white">@{{ username }}</h2>
+                                <h2 class="text-xl font-bold text-white">@{{ viewingUsername }}</h2>
                                 <div class="flex gap-4 mt-2">
                                     <button @click="openFollowersModal" class="text-sm text-[var(--color-text-muted)] hover:text-white transition-colors">
                                         <strong class="text-white">{{ followerCount }}</strong> followers
@@ -186,6 +195,13 @@
                                 >
                                     Blocked
                                 </button>
+                                <button
+                                    v-if="!viewingOwnProfile"
+                                    @click="viewOwnProfile"
+                                    class="px-4 py-2 rounded-lg font-medium transition-colors bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
+                                >
+                                    Back to My Profile
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -207,13 +223,11 @@
                     </div>
                 </div>
 
-                <!-- Other tabs fallback -->
                 <div v-else class="rounded-xl p-6">
                     {{ message }}
                 </div>
             </main>
         </div>
-        <!-- Scripts - Order matters! -->
         <script src="api.js"></script>
         <script src="components/Navbar.js"></script>
         <script src="components/LoginPopup.js"></script>
@@ -221,11 +235,10 @@
         <script src="components/Post.js"></script>
         <script src="components/TopicCard.js"></script>
         <script src="components/UserListModal.js"></script>
-        <!-- New recommendation components -->
         <script src="components/RecommendedPosts.js"></script>
         <script src="components/RecommendedAccounts.js"></script>
         <script src="components/PopularFollows.js"></script>
-        <!-- Main app must be last -->
+        <script src="components/PostModal.js"></script>
         <script src="app.js"></script>
     </body>
 </html>

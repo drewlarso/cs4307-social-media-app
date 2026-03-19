@@ -6,6 +6,8 @@ createApp({
             currentTab: 'home',
             username: localStorage.getItem('username') || '',
             accountId: localStorage.getItem('accountId') || null,
+            viewingUsername: localStorage.getItem('username') || '',
+            viewingAccountId: localStorage.getItem('accountId') || null,
             posts: [],
             discoverPosts: [],
             profilePosts: [],
@@ -19,23 +21,22 @@ createApp({
             followingCount: 0,
             isFollowingUser: false,
             isBlockedUser: false,
-            viewingOwnProfile: false,
+            viewingOwnProfile: true,
             showFollowButton: false,
-            // Modal state
             showFollowersModal: false,
             showFollowingModal: false,
             showBlocksModal: false,
-            // Modal data
             followersList: [],
             followingList: [],
             blockedUsersList: [],
-            // Current viewed profile account ID (for modals)
             currentProfileAccountId: null,
-            // NEW: Recommendation data
             recommendedPosts: [],
             recommendedAccounts: [],
             popularFollows: [],
-            showRecommendations: false
+            showRecommendations: false,
+            showPostModal: false,
+            selectedPost: null,
+            postReplies: []
         }
     },
     computed: {
@@ -51,19 +52,53 @@ createApp({
             if (tab === 'home' && this.username) {
                 this.posts = []
                 await this.fetchUserPosts()
-                // Fetch recommendations when on home tab
                 await this.fetchRecommendations()
             } else if (tab === 'discover') {
                 this.posts = []
                 this.topicPosts = []
                 await this.fetchTopics()
             } else if (tab === 'profile' && this.username) {
+                this.viewingUsername = this.username
+                this.viewingAccountId = this.accountId
                 this.profilePosts = []
                 await this.fetchProfilePosts()
+                await this.loadProfileStats(parseInt(this.accountId))
             }
         },
         
-        // NEW: Fetch all recommendations
+        async viewPost(post) {
+            try {
+                const replies = await API.fetchRepliesByPost(post.post_id)
+                this.selectedPost = post
+                this.postReplies = replies
+                this.showPostModal = true
+            } catch (error) {
+                console.error('Failed to fetch post details:', error)
+            }
+        },
+        
+        closePostModal() {
+            this.showPostModal = false
+            this.selectedPost = null
+            this.postReplies = []
+        },
+        
+        viewOwnProfile() {
+            this.viewingUsername = this.username
+            this.viewingAccountId = this.accountId
+            this.currentTab = 'profile'
+            this.fetchProfilePosts()
+            this.loadProfileStats(parseInt(this.accountId))
+        },
+        
+        async viewUserProfile(user) {
+            this.viewingUsername = user.username
+            this.viewingAccountId = user.account_id
+            this.currentTab = 'profile'
+            await this.loadProfileStats(user.account_id)
+            await this.fetchProfilePosts()
+        },
+        
         async fetchRecommendations() {
             if (!this.accountId) return
             
@@ -74,27 +109,26 @@ createApp({
                     API.fetchPopularFollows(parseInt(this.accountId))
                 ])
                 
-                this.recommendedPosts = posts
-                this.recommendedAccounts = accounts
-                this.popularFollows = popular
+                const blockedUsers = await API.getBlockedUsers(parseInt(this.accountId))
+                const blockedIds = blockedUsers.map(u => u.account_id)
+                
+                this.recommendedPosts = posts.filter(post => !blockedIds.includes(post.account_id))
+                this.recommendedAccounts = accounts.filter(acc => !blockedIds.includes(acc.account_id))
+                this.popularFollows = popular.filter(acc => !blockedIds.includes(acc.account_id))
                 this.showRecommendations = true
             } catch (error) {
                 console.error('Failed to fetch recommendations:', error)
             }
         },
         
-        // NEW: Handle view post from recommendations
         viewRecommendedPost(post) {
-            // You can implement a post detail view or expand the post
-            console.log('Viewing post:', post)
+            this.viewPost(post)
         },
         
-        // NEW: Handle view all recommended posts
         viewAllRecommendedPosts() {
             console.log('View all recommended posts')
         },
         
-        // NEW: Handle view all recommended accounts
         viewAllRecommendedAccounts() {
             console.log('View all recommended accounts')
         },
@@ -102,8 +136,6 @@ createApp({
         async fetchTopics() {
             try {
                 this.topics = await API.fetchTopics()
-
-                // Fetch post counts for each topic
                 for (const topic of this.topics) {
                     const posts = await API.fetchPostsByTopic(topic.topic_id)
                     topic.postCount = posts.length
@@ -112,6 +144,7 @@ createApp({
                 console.error('Failed to fetch topics:', error)
             }
         },
+        
         async selectTopic(topic) {
             this.selectedTopic = topic
             try {
@@ -121,10 +154,12 @@ createApp({
                 this.topicPosts = []
             }
         },
+        
         backToTopics() {
             this.selectedTopic = null
             this.topicPosts = []
         },
+        
         async loadProfileStats(targetAccountId) {
             try {
                 const [followers, following] = await Promise.all([
@@ -135,57 +170,50 @@ createApp({
                 this.followingCount = following.length
                 this.currentProfileAccountId = targetAccountId
 
-                // Check if current user is viewing their own profile
                 this.viewingOwnProfile = this.accountId && targetAccountId === parseInt(this.accountId)
                 this.showFollowButton = !this.viewingOwnProfile
 
-                // Check if already following
                 if (!this.viewingOwnProfile && this.accountId) {
                     this.isFollowingUser = await API.isFollowing(parseInt(this.accountId), targetAccountId)
                     this.isBlockedUser = await API.isBlocked(parseInt(this.accountId), targetAccountId)
+                } else {
+                    this.isFollowingUser = false
+                    this.isBlockedUser = false
                 }
             } catch (error) {
                 console.error('Failed to load profile stats:', error)
             }
         },
+        
         async toggleFollow() {
             if (!this.accountId) return
-
-            // Find the target account (profile being viewed)
-            const accounts = await API.fetchAccounts()
-            const targetAccount = accounts.find(acc => acc.username === this.username)
-
-            if (!targetAccount) return
 
             const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
 
             if (this.isFollowingUser) {
-                // Unfollow
                 await fetch('/follows', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         from_id: parseInt(this.accountId),
-                        to_id: targetAccount.account_id
+                        to_id: this.currentProfileAccountId
                     })
                 })
                 this.isFollowingUser = false
                 this.followerCount--
             } else {
-                // Follow
-                await API.createFollow(parseInt(this.accountId), targetAccount.account_id, now)
+                await API.createFollow(parseInt(this.accountId), this.currentProfileAccountId, now)
                 this.isFollowingUser = true
                 this.followerCount++
             }
             
-            // Refresh recommendations after follow/unfollow
             await this.fetchRecommendations()
         },
+        
         async toggleBlock() {
             if (!this.accountId || !this.currentProfileAccountId) return
 
             if (this.isBlockedUser) {
-                // Unblock
                 await fetch('/blocks', {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' },
@@ -196,30 +224,31 @@ createApp({
                 })
                 this.isBlockedUser = false
             } else {
-                // Block
                 await API.createBlock(parseInt(this.accountId), this.currentProfileAccountId)
                 this.isBlockedUser = true
-                // Also unfollow if following
                 if (this.isFollowingUser) {
                     await this.toggleFollow()
                 }
             }
             
-            // Refresh recommendations after block/unblock
             await this.fetchRecommendations()
         },
+        
         openFollowersModal() {
             this.showFollowersModal = true
             this.loadFollowersList()
         },
+        
         openFollowingModal() {
             this.showFollowingModal = true
             this.loadFollowingList()
         },
+        
         openBlocksModal() {
             this.showBlocksModal = true
             this.loadBlockedUsersList()
         },
+        
         async loadFollowersList() {
             if (!this.currentProfileAccountId) return
             try {
@@ -229,6 +258,7 @@ createApp({
                 this.followersList = []
             }
         },
+        
         async loadFollowingList() {
             if (!this.currentProfileAccountId) return
             try {
@@ -238,6 +268,7 @@ createApp({
                 this.followingList = []
             }
         },
+        
         async loadBlockedUsersList() {
             if (!this.accountId) return
             try {
@@ -247,6 +278,7 @@ createApp({
                 this.blockedUsersList = []
             }
         },
+        
         async handleUnblock(user) {
             if (!this.accountId) return
             try {
@@ -258,78 +290,51 @@ createApp({
                         to_id: user.account_id
                     })
                 })
-                // Remove from list
                 this.blockedUsersList = this.blockedUsersList.filter(u => u.account_id !== user.account_id)
+                await this.fetchRecommendations()
             } catch (error) {
                 console.error('Failed to unblock user:', error)
             }
         },
-        viewUserProfile(user) {
-            this.username = user.username
-            this.currentProfileAccountId = user.account_id
-            this.loadProfileStats(user.account_id)
-            this.fetchProfilePosts()
-        },
+        
         async fetchUserPosts() {
-            const targetTab = 'home'
             try {
                 if (!this.accountId) {
-                    if (this.currentTab === targetTab) this.posts = []
+                    this.posts = []
                     return
                 }
                 const data = await API.fetchUserFeed(this.accountId)
-
-                if (this.currentTab === targetTab) {
-                    this.posts = data
-                }
+                this.posts = data
             } catch (error) {
                 console.error('Failed to fetch user feed:', error)
-                if (this.currentTab === targetTab) this.posts = []
+                this.posts = []
             }
         },
-        async fetchDiscoverPosts() {
-            const targetTab = 'discover'
-            try {
-                const data = await API.fetchAllPosts(this.accountId)
-
-                if (this.currentTab === targetTab) {
-                    this.posts = data
-                }
-            } catch (error) {
-                console.error('Failed to fetch discover posts:', error)
-                if (this.currentTab === targetTab) this.posts = []
-            }
-        },
+        
         async fetchProfilePosts() {
-            const targetTab = 'profile'
             try {
-                // First get the account to find the account_id
-                const accounts = await API.fetchAccounts()
-                const account = accounts.find(acc => acc.username === this.username)
-
-                if (account) {
-                    await this.loadProfileStats(account.account_id)
-                }
-
-                const data = await API.fetchPostsByUsername(this.username, this.accountId)
-
-                if (this.currentTab === targetTab) {
-                    this.profilePosts = data
-                }
+                if (!this.viewingUsername) return
+                const data = await API.fetchPostsByUsername(this.viewingUsername, this.accountId)
+                this.profilePosts = data
             } catch (error) {
                 console.error('Failed to fetch profile posts:', error)
-                if (this.currentTab === targetTab) this.profilePosts = []
+                this.profilePosts = []
             }
         },
+        
         handleLogin(username) {
             this.username = username
+            this.viewingUsername = username
             this.accountId = localStorage.getItem('accountId')
-            // Refresh the current view if logging in on profile tab
+            this.viewingAccountId = this.accountId
             this.handleTabChange(this.currentTab)
         },
+        
         logout() {
             this.username = ''
+            this.viewingUsername = ''
             this.accountId = null
+            this.viewingAccountId = null
             this.profilePosts = []
             localStorage.removeItem('username')
             localStorage.removeItem('accountId')
@@ -337,13 +342,12 @@ createApp({
             this.currentTab = 'home'
             this.handleTabChange('home')
         },
+        
         async submitPost(topicId) {
             if (!this.newPostContent.trim() || !topicId) return
 
             const now = new Date().toISOString().slice(0, 19).replace('T', ' ')
             const content = this.newPostContent.trim()
-
-            // Use first line as title, rest as body
             const lines = content.split('\n')
             const title = lines[0].slice(0, 100) || 'Untitled'
             const body = lines.length > 1 ? lines.slice(1).join('\n') : content
@@ -360,8 +364,8 @@ createApp({
                 this.newPostContent = ''
                 if (this.currentTab === 'home') {
                     await this.fetchUserPosts()
-                } else if (this.currentTab === 'discover') {
-                    await this.fetchDiscoverPosts()
+                } else if (this.currentTab === 'profile' && this.viewingOwnProfile) {
+                    await this.fetchProfilePosts()
                 }
             } catch (error) {
                 console.error('Error creating post:', error)
@@ -375,13 +379,12 @@ createApp({
         'post-item': Post,
         'topic-card': TopicCard,
         'user-list-modal': UserListModal,
-        // NEW: Register new components
         'recommended-posts': RecommendedPosts,
         'recommended-accounts': RecommendedAccounts,
-        'popular-follows': PopularFollows
+        'popular-follows': PopularFollows,
+        'post-modal': PostModal
     },
     mounted() {
-        // Initial load
         this.handleTabChange('home')
     },
 }).mount('#app')
